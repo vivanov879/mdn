@@ -118,7 +118,8 @@ for i = 1, 1000 do
   end
 end
 
-local outputs, alpha, mu, sigma = unpack(model:forward({features_input, labels_input}))
+-- вместо labels_input можно ставить любую миатрицу нужных размеров, потому что она не влияет на нужные нам alpha, mu, sigma
+local outputs, alpha, mu, sigma = unpack(model:forward({features_input, torch.zeros(labels_input:size())}))
 
 local alpha_sigma = torch.zeros(alpha:size())
 alpha_sigma:cdiv(alpha, sigma)
