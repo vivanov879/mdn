@@ -45,22 +45,13 @@ z = nn.CAddTable()(l)
 z = nn.Log()(z)
 z = nn.MulConstant(-1)(z)
 
-m = nn.gModule({features, labels}, {z})
-features_input = torch.rand(10, 5)
-labels_input = torch.rand(10, 2)
-output = m:forward({features_input, labels_input})
-print(output)
-print(features_input)
-print(labels_input)
+m = nn.gModule({features, labels}, {z, alpha, mu, sigma})
+
 
 --использовать MSECriterion с target=0, потому что там под логарифмом взвешенная с положительными весами сумма нормальных распределний, что меньше единицы, так как сумма alpha = 1. то есть отрицат логарифм не будет < 0
 
-target = torch.zeros(output:size())
 criterion = nn.MSECriterion()
-loss = 0
-loss = loss + criterion:forward(output, target)
 
-print(loss)
 
 --заделаем тестовые features и labels
 local n_data = 100
@@ -88,6 +79,7 @@ end
 local model, criterion = m, criterion
 local params, grads = model:getParameters()
 
+
 -- return loss, grad
 local feval = function(x)
   if x ~= params then
@@ -96,12 +88,15 @@ local feval = function(x)
   grads:zero()
 
   -- forward
-  local outputs = model:forward({features_input, labels_input})
+  local outputs, alpha, mu, sigma = unpack(model:forward({features_input, labels_input}))
   local targets = torch.zeros(outputs:size())
   local loss = criterion:forward(outputs, targets)
   -- backward
+  local dsigma = torch.zeros(sigma:size())
+  local dalpha = torch.zeros(alpha:size())
+  local dmu = torch.zeros(mu:size())
   local dloss_doutput = criterion:backward(outputs, targets)
-  model:backward(data.inputs, dloss_doutput)
+  model:backward(data.inputs, {dloss_doutput, dalpha, dmu, dsigma})
 
   return loss, grads
 end
@@ -112,14 +107,34 @@ end
 local losses = {}
 local optim_state = {learningRate = 1e-1}
 
-for i = 1, 100000 do
+for i = 1, 1000 do
   local _, loss = optim.adagrad(feval, params, optim_state)
   losses[#losses + 1] = loss[1] -- append the new loss
 
   if i % 10 == 0 then
       print(string.format("iteration %4d, loss = %6.6f", i, loss[1]))
-      print(params)
+      --print(params)
       
   end
 end
+
+local outputs, alpha, mu, sigma = unpack(model:forward({features_input, labels_input}))
+
+local alpha_sigma = torch.zeros(alpha:size())
+alpha_sigma:cdiv(alpha, sigma)
+local y, indexes = torch.max(alpha_sigma,2)
+
+local predictions = labels_input:clone()
+for i = 1, predictions:size(1) do 
+  predictions[i] = mu[i][{{}, {indexes[i][1]}}]
+  
+end
+
+print(outputs)
+print(alpha)
+print(mu)
+print(sigma)
+print(predictions)
+
+
 
