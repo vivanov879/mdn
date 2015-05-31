@@ -67,10 +67,10 @@ for i = 1, n_data do
   features_input[{{i}, {}}] = element
   
   label = torch.ones(n_labels)
-  label:mul( i)
-  label[1] = i ^ 0.5
+  label[2] =  i
+  label[1] = i ^ 2
   label:add(torch.randn(label:size()))
-  label:div(n_data)
+  label:div(n_data ^ 2)
   labels_input[{{i}, {}}] = label
   
 end
@@ -134,8 +134,8 @@ end
 print((alpha)[{{60}, {}}])
 print((mu)[{{60}, {}}])
 print((sigma)[{{60}, {}}])
-print(labels_input[{{20}, {}}])
-print(predictions[{{20}, {}}])
+print(labels_input[{{80}, {}}])
+print(predictions[{{80}, {}}])
 
 
 
