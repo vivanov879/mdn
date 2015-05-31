@@ -45,7 +45,7 @@ z3 = nn.CAddTable()(l)
 z4 = nn.Log()(z3)
 z5 = nn.MulConstant(-1)(z4)
 
-m = nn.gModule({features, labels}, {z5, alpha, mu, sigma, e, l[1], l[2]})
+m = nn.gModule({features, labels}, {z5, alpha, mu, sigma})
 
 
 
@@ -68,7 +68,7 @@ for i = 1, n_data do
   
   label = torch.ones(n_labels)
   label:mul( i)
-  label[1] = 0.1
+  label[1] = i ^ 0.5
   label:add(torch.randn(label:size()))
   label:div(n_data)
   labels_input[{{i}, {}}] = label
@@ -89,15 +89,14 @@ local feval = function(x)
   grads:zero()
 
   -- forward
-  local output, alpha, mu, sigma, e, l1, l2 = unpack(model:forward({features_input, labels_input}))
-  print(torch.any(output:lt(0)))
+  local output, alpha, mu, sigma = unpack(model:forward({features_input, labels_input}))
   local loss = torch.mean(output)
   -- backward
   local dsigma = torch.zeros(sigma:size())
   local dalpha = torch.zeros(alpha:size())
   local dmu = torch.zeros(mu:size())
   local doutput = torch.ones(output:size())
-  model:backward({features_input, labels_input}, {doutput, dalpha, dmu, dsigma, torch.zeros(output:size()), torch.zeros(output:size()), torch.zeros(output:size())})
+  model:backward({features_input, labels_input}, {doutput, dalpha, dmu, dsigma})
 
   return loss, grads
 end
