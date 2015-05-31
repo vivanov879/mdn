@@ -135,8 +135,8 @@ end
 print((alpha)[{{60}, {}}])
 print((mu)[{{60}, {}}])
 print((sigma)[{{60}, {}}])
-print(labels_input[{{80}, {}}])
-print(predictions[{{80}, {}}])
+print(labels_input[{{20}, {}}])
+print(predictions[{{20}, {}}])
 
 
 
