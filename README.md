@@ -1,1 +1,1 @@
-A Torch 7 implementation of Mixture Density Networks
+Torch implementation of Mixture Density Networks
